@@ -12,16 +12,16 @@ type Controller struct {
 }
 
 func (c Controller) CreateEmail(w http.ResponseWriter, r *http.Request) {
-	emails := []*dto.Email{}
+	email := &dto.Email{}
 
-	if err := json.NewDecoder(r.Body).Decode(&emails); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&email); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(400)
 		json.NewEncoder(w).Encode(map[string]string{"message": err.Error()})
 		return
 	}
 
-	status, err := c.Service.CreateEmail(emails)
+	status, err := c.Service.CreateEmail(email)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
@@ -31,7 +31,7 @@ func (c Controller) CreateEmail(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(map[string]any{"data": emails})
+	json.NewEncoder(w).Encode(map[string]any{"data": email})
 }
 
 func (c Controller) RetrieveEmail(w http.ResponseWriter, r *http.Request) {

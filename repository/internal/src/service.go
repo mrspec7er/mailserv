@@ -12,7 +12,7 @@ type Service struct {
 	DB *sqlx.DB
 }
 
-func (s Service) CreateEmail(emails []*dto.Email) (int, error) {
+func (s Service) CreateEmail(email *dto.Email) (int, error) {
 	const insertQuery = `INSERT INTO emails (subject, sender, recipient, date, body) VALUES ($1, $2, $3, $4, $5)`
 
 	stmt, err := s.DB.Prepare(insertQuery)
@@ -21,11 +21,9 @@ func (s Service) CreateEmail(emails []*dto.Email) (int, error) {
 	}
 	defer stmt.Close()
 
-	for _, email := range emails {
-		_, err = stmt.Exec(email.Subject, email.Sender, email.Recipient, time.Now(), email.Body)
-		if err != nil {
-			log.Fatal("error inserting email: %w", err)
-		}
+	_, err = stmt.Exec(email.Subject, email.Sender, email.Recipient, time.Now(), email.Body)
+	if err != nil {
+		log.Fatal("error inserting email: %w", err)
 	}
 
 	return 201, nil
