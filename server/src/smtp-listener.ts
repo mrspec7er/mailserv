@@ -7,11 +7,16 @@ export interface ExtendedSMTPServerSession extends SMTPServerSession {
 }
 
 export const Server = new SMTPServer({
-  onData(stream, session: ExtendedSMTPServerSession, callback) {
+  onData(
+    stream,
+    session: ExtendedSMTPServerSession,
+    callback: (err?: Error | null) => void
+  ) {
     parser(stream, {}, (err, parsedData) => {
       if (err) console.log("Error:", err);
 
       storeMessage(parsedData, session);
+      // callback(new Error("Closing connection after processing email."));
       stream.on("end", callback);
     });
   },
@@ -35,15 +40,12 @@ export function storeMessage(
   data: ParsedMail,
   session: ExtendedSMTPServerSession
 ) {
-  const payload = [
-    {
-      subject: data.subject,
-      sender: session.mailFrom,
-      recipient: session.rcptTo.toString(),
-      body: data.text,
-    },
-  ];
-
+  const payload = {
+    subject: data.subject,
+    sender: session.mailFrom,
+    recipient: session.rcptTo.toString(),
+    body: data.text,
+  };
   fetch(`${process.env.REPOSITORY_DOMAIN}/emails`, {
     method: "POST",
     headers: {
@@ -53,7 +55,7 @@ export function storeMessage(
   })
     .then((response) => response.json()) // Parse the JSON response
     .then((responseData) => {
-      console.log(responseData);
+      // console.log(responseData);
     })
     .catch((error) => {
       console.error(error);

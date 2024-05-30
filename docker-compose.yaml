@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  database:
+    build: ./database
+    container_name: db
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  repository:
+    depends_on:
+      database:
+        condition: service_healthy
+    build:
+      context: ./repository
+      dockerfile: Dockerfile
+    container_name: repository
+    restart: always
+    ports:
+      - 8080:8080
+    develop:
+      watch:
+        - action: sync
+          path: ./repository
+          target: /repository
+          ignore:
+            - main
+            - tmp
+        - action: rebuild
+          path: ./repository/go.mod
+
+  server:
+    depends_on:
+      database:
+        condition: service_healthy
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: server
+    develop:
+      watch:
+        - action: sync
+          path: ./server
+          target: /server
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./server/package.json
+    ports:
+      - 1025:1025
+
+volumes:
+  db:
